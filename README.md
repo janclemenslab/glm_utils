@@ -39,7 +39,6 @@ need-to_haves:
 - [ ] reconstruct time-domain filter from basis functions and weights
 - [ ] balancing
 - [ ] add example code for standard pipelines
-- [ ] 
 
 nice-to-haves:
 - [ ] deal with multi-feature fits (need to adjust basis functions and time delay embedding accordinly)
