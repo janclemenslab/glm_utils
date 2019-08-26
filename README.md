@@ -12,23 +12,23 @@ from sklearn.pipeline import Pipeline
 
 from glm_utils.preprocessing import time_delay_embedding
 
+# Generate dummy data.
 x = np.random.random((1000, 1))
 y = np.random.random((1000,))
 
-X, y = time_delay_embedding(x, y, window_size=w)
-
 # Do manipulations regarding X *and* y here (e.g. balancing, test-train split, selection of data).
-# Transformations that only change X (normalization, feature transformation) should be made part of the pipeline.
+X, y = time_delay_embedding(x, y, window_size=100)
 
-w = 100
+# Transformations that only change X (normalization, feature transformation)
+# should be made part of the pipeline.
 steps = [('quad_exp', PolynomialFeatures(degree=2, interaction_only=False, include_bias=True)),
          ('ridge', BayesianRidge())]
 
 with TemporaryDirectory() as tempdir:
-    clf = Pipeline(steps, memory=tempdir)
-    clf.fit(X, y)
-    y_pred, y_pred_std = clf.predict(X, return_std=True)
-    print(f'r2={clf.score(X, y):1.2}')
+    model = Pipeline(steps, memory=tempdir)
+    model.fit(X, y)
+    y_pred, y_pred_std = model.predict(X, return_std=True)
+    print(f'r2={model.score(X, y):1.2}')
 ```
 
 ## TODO:
