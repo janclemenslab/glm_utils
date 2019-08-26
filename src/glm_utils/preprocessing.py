@@ -2,47 +2,74 @@ import numpy as np
 from numpy.lib.stride_tricks import as_strided
 
 
-def time_delay_embedding(data, window_size, overlap_size=0, flatten_inside_window=True, preserve_size=True):
-    """Time delay embedding of the data with overlap.
+def time_delay_embedding(x, y=None, window_size=None, overlap_size=None, flatten_inside_window=True, exclude_t0=True):
+    """Time delay embedding with overlap.
+    
+    The embedded x will have `windows_size` fewer time points than the original x. 
+    If y is provided, it will be modified to match the size of the embedded x.
     
     Args:
-        data (numpy array): [description]
-        window_size (int?): [description]
-        overlap_size (int, optional): [description]. Defaults to 0.
-        flatten_inside_window (bool, optional): [description]. Defaults to True.
-        preserve_size (bool, optional): Defaults to False.
+        x (numpy array): 1D or 2D array
+        y (numpy array, optional): If provided, will modify y to match entries in X
+        window_size (int): Number of timesteps.
+        overlap_size (int, optional): Equivalent to the stride of the embedding. 
+                                      Defaults to window_size-1 (stride=1).
+        flatten_inside_window (bool, optional): Flatten 2D x-values to 1D.
+                                                X will be [nb_timesteps, delays * features], otherwise [nb_timesteps, delays, features].
+                                                Will always preserve shape of y features (except of the number of timesteps).
+                                                Defaults to True.
+        exclude_t0 (bool, optional): Exclude the current time point from the delays. 
+                                    `X[t]` will contain `[x[t-w-1, ..., x[t-1]]`. If `exlude_t0=False`, `x[t-w, ..., x[t]]`
+                                     Done by shifting y: y=y[1:], X=X[:-1]. So this will shorten both X and y by one timestep.
+                                     Defaults to True.
     
     Returns:
-        chunked data [nb_timesteps, window_size] where nb_timesteps depends on the overlap_size and preserve_size parameters
+        X: delay embedded time series
+        y (if provided as an argument)
     """
-    assert data.ndim == 1 or data.ndim == 2
-    if data.ndim == 1:
-        data = data.reshape((-1, 1))
 
-    # get the number of overlapping windows that fit into the data
-    num_windows = (data.shape[0] - window_size) // (window_size - overlap_size) + 1
-    overhang = data.shape[0] - (num_windows*window_size - (num_windows-1)*overlap_size)
+    if window_size is None:
+        raise ValueError('Invalid arguments: window_size not specified.')
+    
+    if 0 <= x.ndim > 2:
+        raise ValueError(f'Invalid arguments: x can only be one or two dimensional. Has {x.ndim} dimensions.')
 
-    # if there's overhang, need an extra window and a zero pad on the data
+    if x.ndim == 1:
+        x = x.reshape((-1, 1))
+
+    if overlap_size is None:
+        overlap_size = window_size - 1
+
+    # get the number of overlapping windows that fit into the x
+    num_windows = (x.shape[0] - window_size) // (window_size - overlap_size) + 1
+    overhang = x.shape[0] - (num_windows * window_size - (num_windows - 1) * overlap_size)
+
+    # if there's overhang, need an extra window and a zero pad on the x
     if overhang != 0:
         num_windows += 1
-        new_len = num_windows*window_size - (num_windows-1)*overlap_size
-        pad_len = new_len - data.shape[0]
-        data = np.pad(data, ((0, pad_len), (0, 0)), mode='constant', constant_values=0)
-    
-    sz = data.dtype.itemsize
-    ret = as_strided(
-        data,
-        shape=(num_windows, window_size*data.shape[1]),
-        strides=((window_size-overlap_size)*data.shape[1]*sz, sz)
+        new_len = num_windows * window_size - (num_windows - 1) * overlap_size
+        pad_len = new_len - x.shape[0]
+        x = np.pad(x, ((0, pad_len), (0, 0)), mode='constant', constant_values=0)
+
+    sz = x.dtype.itemsize
+    X = as_strided(
+        x,
+        shape=(num_windows, window_size * x.shape[1]),
+        strides=((window_size-overlap_size) * x.shape[1] * sz, sz)
     )
 
-    if preserve_size:
-        new_len = ret.shape[0]
-        pad_len = data.shape[0] - new_len
-        ret = np.pad(ret, ((pad_len, 0), (0, 0)), mode='constant', constant_values=0)
-    
-    if flatten_inside_window:
-        return ret
+    if not flatten_inside_window:
+        X = X.reshape((num_windows, -1, x.shape[1]))
+
+    if y is not None:
+        y = y[window_size - 1::window_size - overlap_size]
+
+    if exclude_t0:
+        X = X[:-1]
+    if y is not None and exclude_t0:
+        y = y[1:]
+
+    if y is not None:
+        return X, y
     else:
-        return ret.reshape((num_windows, -1, data.shape[1]))
+        return X
