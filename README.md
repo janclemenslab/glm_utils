@@ -12,8 +12,8 @@ from sklearn.pipeline import Pipeline
 
 from glm_utils.preprocessing import time_delay_embedding
 
-x = np.random.random(1000, 1)
-y = np.random.random(1000, )
+x = np.random.random((1000, 1))
+y = np.random.random((1000,))
 
 w = 100
 steps = [('delay_embed', FunctionTransformer(time_delay_embedding, kw_args={'window_size': w, 'overlap_size': w-1, 'preserve_size': True})),
