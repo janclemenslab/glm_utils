@@ -27,6 +27,11 @@ with TemporaryDirectory() as tempdir:
     print(f'r2={clf.score(x, y):1.2}')
 ```
 
+As pointed out by Adrian, pipelines only do transformations on `x`, not on `y`. For everything that needs to manipulate both `x` and `y` we need to 
+1. delay embed `x`->`X`
+2. do the transformations on `X` and `y` (e.g. train_test_split, balancing, selecting specific subsets)
+3. feed that into the rest of the pipeline (basis functions, PCA, normalizations, regression)
+
 
 ## TODO:
 need-to_haves:
