@@ -27,13 +27,14 @@ def time_delay_embedding(x, y=None, window_size=None, overlap_size=None, flatten
         X: delay embedded time series
         y (if provided as an argument)
     """
-
     if window_size is None:
         raise ValueError('Invalid arguments: window_size not specified.')
     
     if 0 <= x.ndim > 2:
         raise ValueError(f'Invalid arguments: x can only be one or two dimensional. Has {x.ndim} dimensions.')
-
+    
+    x = np.ascontiguousarray(x)  # make sure x occupies contiguous space in memory - not necessarily the case for data from xarrays
+    
     if x.ndim == 1:
         x = x.reshape((-1, 1))
 
@@ -43,7 +44,6 @@ def time_delay_embedding(x, y=None, window_size=None, overlap_size=None, flatten
     # get the number of overlapping windows that fit into the x
     num_windows = (x.shape[0] - window_size) // (window_size - overlap_size) + 1
     overhang = x.shape[0] - (num_windows * window_size - (num_windows - 1) * overlap_size)
-
     # if there's overhang, need an extra window and a zero pad on the x
     if overhang != 0:
         num_windows += 1
