@@ -17,7 +17,7 @@ def unpack_quadratic_kernel(coefficients, window_size: int, quad_as_matrix: bool
     Returns:
         bias [scalar], linear [w,], quadratic terms ([w, w] or [w*w/2 - w/2,])
     """
-    bias, linear, quadratic = _unpack_quadratic_features(coefficients[np.newindow_sizeaxis, ...],
+    bias, linear, quadratic = _unpack_quadratic_features(coefficients[np.newaxis, ...],
                                                          window_size, quad_as_matrix)
 
     if reverse_time:
