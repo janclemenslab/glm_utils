@@ -120,3 +120,84 @@ def undersampling(x,y,window_size=1,seed=None):
     y = y[idx]
 
     return X, y
+
+def makeBasis_StimKernel(neye, ncos, kpeaks, b, nkt = None):
+    """ Creates and plots basis of raised cosines. Adapted from Weber &
+    Pillow 2017.
+
+    Github link:
+        https://github.com/aiweber/GLM_and_Izhikevich/blob/master/makeBasis_StimKernel.m
+
+    Parameters
+    ----------
+    neye : int
+            Number of identity basis vectors at front. This will create vector
+            columns with spikes to capture the data points preceding the event.
+    ncos  : int
+            Number of vectors that are raised cosines. Cannot be 0 or negative.
+    kpeaks : list
+            List of peak positions of 1st and last cosines relative to the start
+            of cosine basis vectors (e.g. [0 10])
+    b : int
+            Offset for nonlinear scaling.  larger values -> more linear
+            scaling of vectors.
+    nkt : int, optional
+            Desired number of vectors in basis
+
+    Returns
+    -------
+    kbasis : ndarray
+        A basis of raised cosines as columns. The `neye` value defines
+        the number of first columns which has identity matrix at last rows
+        for dense sampling of data.
+
+    """
+
+    kpeaks = np.array(kpeaks)
+    kdt = 1 # step for the kernel
+
+    yrnge = nlin(kpeaks + b) # nonlinear transform, b is nonlinearity of scaling
+
+    db = (yrnge[1]-yrnge[0])/(ncos-1) #spacing between cosine peaks
+    ctrs = np.linspace(yrnge[0], yrnge[1], ncos) #nlin(kpeaks)<-weird # centers of cosines
+
+
+    # mxt is for the kernel, without the nonlinear transform
+    mxt = invnl(yrnge[1]+2*db)-b #!!!!why is there 2*db? max time bin
+    kt0 = np.arange(0,mxt,kdt) # kernel time points/ no nonlinear transform yet
+    nt = len(kt0) # number of kernel time points
+
+    # Now we transform kernel time points through nonlinearity and tile them
+    e1 = np.tile(nlin(kt0+b),(ncos,1))
+    # Tiling the center points for matrix multiplication
+    e2 = np.tile(ctrs,(nt,1)).T
+
+    # Creating the raised cosines
+    kbasis0 = ff(e1, e2, db)
+
+    #Concatenate identity vectors
+    nkt0 = np.size(kt0,0)  #!!!! same as nt??? Redundant or not
+    a1 = np.concatenate((np.eye(neye), np.zeros((nkt0,neye))),axis=0)
+    a2 = np.concatenate((np.zeros((neye,ncos)),kbasis0.T),axis=0)
+    kbasis = np.concatenate((a1,a2),axis=1)
+    kbasis = np.flipud(kbasis)
+    nkt0 = np.size(kbasis,1)
+
+    # Modifying number of output cosines if nkt is given
+    if nkt == None:
+        pass
+    elif nkt0 < nkt: # if desired time samples greater, add more zero basis
+        kbasis = np.concatenate((np.zeros(kbasis,(nkt-nkt0,ncos+neye))),axis=0)
+    elif nkt0 > nkt: # if desired time samples less, get the last nkt columns of cosines
+        kbasis = kbasis[:,:nkt]
+
+    kbasis = normalizecols(kbasis)
+
+    plt.figure()
+    plt.plot(kbasis)
+    plt.title(f'ncos: {ncos} '+
+              f'neye: {neye} '+
+              f'nkt: {nkt}\n'+
+              f'kpeaks: {kpeaks} '+
+              f'nonlinearity (b): {b}')
+    return kbasis
