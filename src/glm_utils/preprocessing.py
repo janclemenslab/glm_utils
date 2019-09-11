@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.lib.stride_tricks import as_strided
-
+from matplotlib import pyplot as plt
 
 def time_delay_embedding(x, y=None, window_size=None, overlap_size=None, flatten_inside_window=True, exclude_t0=True):
     """Time delay embedding with overlap.
@@ -121,7 +121,22 @@ def undersampling(x,y,window_size=1,seed=None):
 
     return X, y
 
-def makeBasis_StimKernel(neye, ncos, kpeaks, b, nkt = None):
+nlin = lambda x  : np.log(x +1e-20)
+invnl = lambda x : np.exp(x) -1e-20
+
+def ff(x, c, db):
+    """ Gives the raised cosine of data points `x` with classified centers
+    `c` with spacing between cosine peaks `db`.
+    """
+    kbasis = (np.cos(np.maximum(-np.pi,np.minimum(np.pi,(x-c)*np.pi/db/2)))+1)/2
+    return kbasis
+
+def normalizecols(A):
+    """ Normalize the columns of a 2D array."""
+    B = A/np.tile(np.sqrt(sum(A**2,0)),(np.size(A,0),1))
+    return B
+
+def makeBasis_StimKernel(neye, ncos, kpeaks, b, nkt = None, plot = False):
     """ Creates and plots basis of raised cosines. Adapted from Weber &
     Pillow 2017.
 
@@ -193,11 +208,12 @@ def makeBasis_StimKernel(neye, ncos, kpeaks, b, nkt = None):
 
     kbasis = normalizecols(kbasis)
 
-    plt.figure()
-    plt.plot(kbasis)
-    plt.title(f'ncos: {ncos} '+
-              f'neye: {neye} '+
-              f'nkt: {nkt}\n'+
-              f'kpeaks: {kpeaks} '+
-              f'nonlinearity (b): {b}')
+    if plot:
+        plt.figure()
+        plt.plot(kbasis)
+        plt.title(f'ncos: {ncos} '+
+                  f'neye: {neye} '+
+                  f'nkt: {nkt}\n'+
+                  f'kpeaks: {kpeaks} '+
+                  f'nonlinearity (b): {b}')
     return kbasis
