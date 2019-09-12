@@ -217,3 +217,10 @@ def makeBasis_StimKernel(neye, ncos, kpeaks, b, nkt = None, plot = False):
                   f'kpeaks: {kpeaks} '+
                   f'nonlinearity (b): {b}')
     return kbasis
+
+def backproject_filter(basis, filt):
+    """Back projects the filters to the basis so that the original data can be
+    predicted.
+    """
+    filt_ = np.dot(basis,filt)
+    return filt_
