@@ -41,11 +41,16 @@ Processing steps that require manipulations of `X` *and* `y` - such as time dela
 
 Processing steps that only affect `X` - feature normalization or scaling, basis function projections, PCA, polynomial expansions - should be included in the pipeline. Custom functions should follow this signature: `X = func(X, **kwargs)` and can be integrated into a pipeline with the [FunctionTransformer](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.FunctionTransformer.html#sklearn.preprocessing.FunctionTransformer). Alternatively, a custom class implementing the [Transformer interface](https://scikit-learn.org/stable/developers/contributing.html#rolling-your-own-estimator) can be used. Custom classes have the advantage of providing access to parameters of the transform - e.g. the basis vectors used in a basis function projection.
 
+## Useful sxtensions
+- [Group lasso](https://group-lasso.readthedocs.io/en/latest/index.html)
+- more advanced balancing with [imbalanced-learn](https://imbalanced-learn.readthedocs.io/en/stable/)
+- Generalized Additive models as a more principled way of using basis functions: [pyGAM]](https://pygam.readthedocs.io/en/latest/index.html)
+
 ## TODO:
 need-to_haves:
-- [ ] make basis and project onto basis functions
-- [ ] reconstruct time-domain filter from basis functions and weights
-- [ ] balancing
+- [x] make basis and project onto basis functions
+- [x] reconstruct time-domain filter from basis functions and weights
+- [x] balancing
 - [ ] add example code for standard pipelines
 
 nice-to-haves:
