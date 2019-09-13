@@ -8,7 +8,7 @@ def test_transform():
     basis = np.array([[1,0],[0,-1]])
 
     #When
-    o = pre.Transformer(basis)
+    o = pre.BasisProjection(basis)
     Xt = o.transform(X)
     Xb = o.inverse_transform(Xt)
 

@@ -1,6 +1,7 @@
 import numpy as np
 from numpy.lib.stride_tricks import as_strided
 from matplotlib import pyplot as plt
+from sklearn.base import TransformerMixin
 
 def time_delay_embedding(x, y=None, window_size=None, overlap_size=None, flatten_inside_window=True, exclude_t0=True):
     """Time delay embedding with overlap.
@@ -220,7 +221,7 @@ def makeBasis_StimKernel(neye, ncos, kpeaks, b, nkt = None, plot = False):
 
 
 
-class Transformer():
+class BasisProjection(TransformerMixin):
     """"""
 
     def __init__(self, basis):
@@ -232,9 +233,8 @@ class Transformer():
         """Basis projection of the *delay embedded data* `X` onto `basis`.
         Shape of X should be [# of observation, window_size].
         See :func:`time_delay_embedding`"""
-        try:
-            X.shape[1] == self.n_times
-        except:
+
+        if X.shape[1] != self.n_times:
             raise ValueError(f'Cannot transform X with {X.shape} shape'
                              +'and basis with {self.basis.shape} shape.'
                              +' X shape1 != basis shape0')
@@ -245,9 +245,8 @@ class Transformer():
         predicted.
         Shape of X should be [# of observation, # of basis columns].
         """
-        try:
-            Xt.shape[1] == self.n_bases
-        except:
+
+        if Xt.shape[1] != self.n_bases:
             raise ValueError(f'Cannot transform X with {Xt.shape} shape'
                              +'and basis with {self.basis.shape} shape.'
                              +' X shape1 != basis shape1')
