@@ -218,9 +218,37 @@ def makeBasis_StimKernel(neye, ncos, kpeaks, b, nkt = None, plot = False):
                   f'nonlinearity (b): {b}')
     return kbasis
 
-def backproject_filter(basis, filt):
-    """Back projects the filters to the basis so that the original data can be
-    predicted.
-    """
-    filt_ = np.dot(basis,filt)
-    return filt_
+
+
+class Transformer():
+    """"""
+
+    def __init__(self, basis):
+        self.basis = basis
+        self.n_times = self.basis.shape[0] #number of time points in basis
+        self.n_bases = self.basis.shape[1] #number of cosine bumps in basis
+
+    def transform(self, X):
+        """Basis projection of the *delay embedded data* `X` onto `basis`.
+        Shape of X should be [# of observation, window_size].
+        See :func:`time_delay_embedding`"""
+        try:
+            X.shape[1] == self.n_times
+        except:
+            raise ValueError(f'Cannot transform X with {X.shape} shape'
+                             +'and basis with {self.basis.shape} shape.'
+                             +' X shape1 != basis shape0')
+        return np.dot(X, self.basis)
+
+    def inverse_transform(self, Xt):
+        """Back projects the filters to the basis so that the original data can be
+        predicted.
+        Shape of X should be [# of observation, # of basis columns].
+        """
+        try:
+            Xt.shape[1] == self.n_bases
+        except:
+            raise ValueError(f'Cannot transform X with {Xt.shape} shape'
+                             +'and basis with {self.basis.shape} shape.'
+                             +' X shape1 != basis shape1')
+        return np.dot(Xt, self.basis.T)
