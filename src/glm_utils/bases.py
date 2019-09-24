@@ -160,4 +160,5 @@ def bsplines(width, positions, degree: int = 3, periodic: bool = False):
         bsplines.append((positions, coeffs, degree))
 
     B = np.array([si.splev(t, spline) for spline in bsplines])
-    return B.T
+    B =  B[:, ::-1].T  # invert so bases "begin" at the right and transpose to [time x bases]
+    return B
