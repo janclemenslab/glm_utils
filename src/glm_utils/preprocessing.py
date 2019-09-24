@@ -3,6 +3,7 @@ from numpy.lib.stride_tricks import as_strided
 from matplotlib import pyplot as plt
 from sklearn.base import TransformerMixin
 
+
 def time_delay_embedding(x, y=None, window_size=None, overlap_size=None, flatten_inside_window=True, exclude_t0=True):
     """Time delay embedding with overlap.
 
@@ -34,7 +35,8 @@ def time_delay_embedding(x, y=None, window_size=None, overlap_size=None, flatten
     if 0 <= x.ndim > 2:
         raise ValueError(f'Invalid arguments: x can only be one or two dimensional. Has {x.ndim} dimensions.')
 
-    x = np.ascontiguousarray(x)  # make sure x occupies contiguous space in memory - not necessarily the case for data from xarrays
+    # make sure x occupies contiguous space in memory - not necessarily the case for data from xarrays
+    x = np.ascontiguousarray(x)
 
     if x.ndim == 1:
         x = x.reshape((-1, 1))
@@ -75,7 +77,8 @@ def time_delay_embedding(x, y=None, window_size=None, overlap_size=None, flatten
     else:
         return X
 
-def undersampling(x,y,window_size=1,seed=None):
+
+def undersampling(x, y, window_size=1, seed=None):
     ''' Data balancing of binary data [0,1], the majority class will be reduced to the size of the minority class.
 
     The balanced y will have as many ones as zeros with an undersampled majority class.
@@ -96,48 +99,54 @@ def undersampling(x,y,window_size=1,seed=None):
     np.random.seed(seed)
 
     # find where is response
-    y_ones = np.where(y==1)[0]
+    y_ones = np.where(y == 1)[0]
     # find no response
-    y_null = np.where(y==0)[0]
+    y_null = np.where(y == 0)[0]
 
     # find minority and majority class
     if len(y_ones) > len(y_null):
-            minority = y_null
-            majority = y_ones
+        minority = y_null
+        majority = y_ones
     elif len(y_ones) < len(y_null):
-            minority = y_ones
-            majority = y_null
+        minority = y_ones
+        majority = y_null
     elif len(y_ones) == len(y_null):
-            print('binary data already balanced!')
-            return x, y
+        print('binary data already balanced!')
+        return x, y
 
     # subsample majority
     freq = len(minority)/len(majority)
     n = np.floor(len(majority)*freq)
     majority = majority[np.random.choice(len(majority), int(n))]
-    idx = np.r_[minority,majority]
+    idx = np.r_[minority, majority]
 
-    X = x[idx-window_size+1,...]
+    X = x[idx-window_size+1, ...]
     y = y[idx]
 
     return X, y
 
-nlin = lambda x  : np.log(x +1e-20)
-invnl = lambda x : np.exp(x) -1e-20
+
+def nlin(x): return np.log(x + 1e-20)
+
+
+def invnl(x): return np.exp(x) - 1e-20
+
 
 def ff(x, c, db):
     """ Gives the raised cosine of data points `x` with classified centers
     `c` with spacing between cosine peaks `db`.
     """
-    kbasis = (np.cos(np.maximum(-np.pi,np.minimum(np.pi,(x-c)*np.pi/db/2)))+1)/2
+    kbasis = (np.cos(np.maximum(-np.pi, np.minimum(np.pi, (x-c)*np.pi/db/2)))+1)/2
     return kbasis
+
 
 def normalizecols(A):
     """ Normalize the columns of a 2D array."""
-    B = A/np.tile(np.sqrt(sum(A**2,0)),(np.size(A,0),1))
+    B = A/np.tile(np.sqrt(sum(A**2, 0)), (np.size(A, 0), 1))
     return B
 
-def makeBasis_StimKernel(neye, ncos, kpeaks, b, nkt = None, plot = False):
+
+def makeBasis_StimKernel(neye, ncos, kpeaks, b, nkt=None, plot=False):
     """ Creates and plots basis of raised cosines. Adapted from Weber &
     Pillow 2017.
 
@@ -170,55 +179,53 @@ def makeBasis_StimKernel(neye, ncos, kpeaks, b, nkt = None, plot = False):
     """
 
     kpeaks = np.array(kpeaks)
-    kdt = 1 # step for the kernel
+    kdt = 1  # step for the kernel
 
-    yrnge = nlin(kpeaks + b) # nonlinear transform, b is nonlinearity of scaling
+    yrnge = nlin(kpeaks + b)  # nonlinear transform, b is nonlinearity of scaling
 
-    db = (yrnge[1]-yrnge[0])/(ncos-1) #spacing between cosine peaks
-    ctrs = np.linspace(yrnge[0], yrnge[1], ncos) #nlin(kpeaks)<-weird # centers of cosines
-
+    db = (yrnge[1]-yrnge[0])/(ncos-1)  # spacing between cosine peaks
+    ctrs = np.linspace(yrnge[0], yrnge[1], ncos)  # nlin(kpeaks)<-weird # centers of cosines
 
     # mxt is for the kernel, without the nonlinear transform
-    mxt = invnl(yrnge[1]+2*db)-b #!!!!why is there 2*db? max time bin
-    kt0 = np.arange(0,mxt,kdt) # kernel time points/ no nonlinear transform yet
-    nt = len(kt0) # number of kernel time points
+    mxt = invnl(yrnge[1]+2*db)-b  # !!!!why is there 2*db? max time bin
+    kt0 = np.arange(0, mxt, kdt)  # kernel time points/ no nonlinear transform yet
+    nt = len(kt0)  # number of kernel time points
 
     # Now we transform kernel time points through nonlinearity and tile them
-    e1 = np.tile(nlin(kt0+b),(ncos,1))
+    e1 = np.tile(nlin(kt0+b), (ncos, 1))
     # Tiling the center points for matrix multiplication
-    e2 = np.tile(ctrs,(nt,1)).T
+    e2 = np.tile(ctrs, (nt, 1)).T
 
     # Creating the raised cosines
     kbasis0 = ff(e1, e2, db)
 
-    #Concatenate identity vectors
-    nkt0 = np.size(kt0,0)  #!!!! same as nt??? Redundant or not
-    a1 = np.concatenate((np.eye(neye), np.zeros((nkt0,neye))),axis=0)
-    a2 = np.concatenate((np.zeros((neye,ncos)),kbasis0.T),axis=0)
-    kbasis = np.concatenate((a1,a2),axis=1)
+    # Concatenate identity vectors
+    nkt0 = np.size(kt0, 0)  # !!!! same as nt??? Redundant or not
+    a1 = np.concatenate((np.eye(neye), np.zeros((nkt0, neye))), axis=0)
+    a2 = np.concatenate((np.zeros((neye, ncos)), kbasis0.T), axis=0)
+    kbasis = np.concatenate((a1, a2), axis=1)
     kbasis = np.flipud(kbasis)
-    nkt0 = np.size(kbasis,1)
+    nkt0 = np.size(kbasis, 1)
 
     # Modifying number of output cosines if nkt is given
     if nkt == None:
         pass
-    elif nkt0 < nkt: # if desired time samples greater, add more zero basis
-        kbasis = np.concatenate((np.zeros(kbasis,(nkt-nkt0,ncos+neye))),axis=0)
-    elif nkt0 > nkt: # if desired time samples less, get the last nkt columns of cosines
-        kbasis = kbasis[:,:nkt]
+    elif nkt0 < nkt:  # if desired time samples greater, add more zero basis
+        kbasis = np.concatenate((np.zeros(kbasis, (nkt-nkt0, ncos+neye))), axis=0)
+    elif nkt0 > nkt:  # if desired time samples less, get the last nkt columns of cosines
+        kbasis = kbasis[:, :nkt]
 
     kbasis = normalizecols(kbasis)
 
     if plot:
         plt.figure()
         plt.plot(kbasis)
-        plt.title(f'ncos: {ncos} '+
-                  f'neye: {neye} '+
-                  f'nkt: {nkt}\n'+
-                  f'kpeaks: {kpeaks} '+
+        plt.title(f'ncos: {ncos} ' +
+                  f'neye: {neye} ' +
+                  f'nkt: {nkt}\n' +
+                  f'kpeaks: {kpeaks} ' +
                   f'nonlinearity (b): {b}')
     return kbasis
-
 
 
 class BasisProjection(TransformerMixin):
@@ -226,8 +233,8 @@ class BasisProjection(TransformerMixin):
 
     def __init__(self, basis):
         self.basis = basis
-        self.n_times = self.basis.shape[0] #number of time points in basis
-        self.n_bases = self.basis.shape[1] #number of cosine bumps in basis
+        self.n_times = self.basis.shape[0]  # number of time points in basis
+        self.n_bases = self.basis.shape[1]  # number of cosine bumps in basis
 
     def transform(self, X):
         """Basis projection of the *delay embedded data* `X` onto `basis`.
@@ -236,8 +243,8 @@ class BasisProjection(TransformerMixin):
 
         if X.shape[1] != self.n_times:
             raise ValueError(f'Cannot transform X with {X.shape} shape'
-                             +'and basis with {self.basis.shape} shape.'
-                             +' X shape1 != basis shape0')
+                             + 'and basis with {self.basis.shape} shape.'
+                             + ' X shape1 != basis shape0')
         return np.dot(X, self.basis)
 
     def inverse_transform(self, Xt):
@@ -248,6 +255,6 @@ class BasisProjection(TransformerMixin):
 
         if Xt.shape[1] != self.n_bases:
             raise ValueError(f'Cannot transform X with {Xt.shape} shape'
-                             +'and basis with {self.basis.shape} shape.'
-                             +' X shape1 != basis shape1')
+                             + 'and basis with {self.basis.shape} shape.'
+                             + ' X shape1 != basis shape1')
         return np.dot(Xt, self.basis.T)
