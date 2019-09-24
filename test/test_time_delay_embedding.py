@@ -80,6 +80,20 @@ print(X.shape, y.shape)
 X, y = time_delay_embedding(x0, y0, window_size=w, exclude_t0=False, flatten_inside_window=False)
 print(X.shape, y.shape)
 
+x0 = np.arange(300).reshape((-1, 3))
+x0[:,0] = 10
+x0[:, 1] = 20
+x0[:, 2] = 30
+
+X = time_delay_embedding(x0, window_size=w, flatten_inside_window=False)
+
+print(x0.shape, X.shape)
+plt.subplot(121)
+plt.plot(x0[1:3,...].T)
+plt.subplot(122)
+plt.imshow(X[2])
+# plt.colorbar()
+
 # %% Exceptions
 x0 = np.random.random((200, 10))
 try:
@@ -98,3 +112,11 @@ except ValueError as e:
     print(e)
 else:    
     raise Exception('ERROR: did not raise excpected ValueError:')
+
+# %%
+x0 = np.random.random((201054,)).astype(np.float64)
+y0 = x0
+
+X = time_delay_embedding(x0, window_size=10)
+np.sum(np.isnan(X))
+
