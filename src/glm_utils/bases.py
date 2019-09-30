@@ -3,8 +3,8 @@ import scipy.interpolate as si
 
 
 def laplacian_pyramid(width, levels, step, FWHM, normalize=True):
-    """ Get a 1d Laplacian pyramid basis matrix of given number of levels for 
-        vectors of given length. 
+    """ Get a 1d Laplacian pyramid basis matrix of given number of levels for
+        vectors of given length.
 
         Args:
             width (int): Time span of the basis functions.
@@ -25,7 +25,7 @@ def laplacian_pyramid(width, levels, step, FWHM, normalize=True):
 
     B = list()
     rg = np.arange(0, width)
-    for ii in range(0, levels, step):
+    for ii in np.arange(0, levels, step):
         cens = 2**(ii-2) + np.arange(int(width/(2**(ii-1))-1))*(2**(ii-1))
         cens = np.floor((width-(np.max(cens)-np.min(cens)+1))/2+cens)+1
         gwidth = 2**(ii-1)/2.35*FWHM
@@ -160,5 +160,5 @@ def bsplines(width, positions, degree: int = 3, periodic: bool = False):
         bsplines.append((positions, coeffs, degree))
 
     B = np.array([si.splev(t, spline) for spline in bsplines])
-    B =  B[:, ::-1].T  # invert so bases "begin" at the right and transpose to [time x bases]
+    B = B[:, ::-1].T  # invert so bases "begin" at the right and transpose to [time x bases]
     return B
