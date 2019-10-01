@@ -27,13 +27,14 @@ def laplacian_pyramid(width, levels, step, FWHM, normalize=True):
     rg = np.arange(0, width)
     for ii in np.arange(0, levels, step):
         cens = 2**(ii-2) + np.arange(int(width/(2**(ii-1))-1))*(2**(ii-1))
-        cens = np.floor((width-(np.max(cens)-np.min(cens)+1))/2+cens)+1
-        gwidth = 2**(ii-1)/2.35*FWHM
-        for jj in range(1, len(cens)):
-            v = np.exp(-(rg-cens[jj])**2 / 2 / gwidth**2)
-            if normalize:
-                v = v / np.linalg.norm(v)
-            B.append(v)
+        if len(cens):  # check if there are any basis functions for that level
+            cens = np.floor((width-(np.max(cens)-np.min(cens)+1))/2+cens)+1
+            gwidth = 2**(ii-1)/2.35*FWHM
+            for jj in range(1, len(cens)):
+                v = np.exp(-(rg-cens[jj])**2 / 2 / gwidth**2)
+                if normalize:
+                    v = v / np.linalg.norm(v)
+                B.append(v)
     return np.stack(B).T
 
 
