@@ -25,7 +25,7 @@ def laplacian_pyramid(width, levels, step, FWHM, normalize=True):
 
     B = list()
     rg = np.arange(0, width)
-    for ii in np.arange(0, levels, step):
+    for ii in np.arange(0, levels, step, dtype=float):
         cens = 2**(ii-2) + np.arange(int(width/(2**(ii-1))-1))*(2**(ii-1))
         cens = np.floor((width-(np.max(cens)-np.min(cens)+1))/2+cens)+1
         gwidth = 2**(ii-1)/2.35*FWHM
