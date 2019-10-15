@@ -163,3 +163,7 @@ def bsplines(width, positions, degree: int = 3, periodic: bool = False):
     B = np.array([si.splev(t, spline) for spline in bsplines])
     B = B[:, ::-1].T  # invert so bases "begin" at the right and transpose to [time x bases]
     return B
+
+
+def identity(width):
+    return np.identity(width)
