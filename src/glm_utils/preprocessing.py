@@ -142,11 +142,12 @@ def ff(x, c, db):
 
 def normalizecols(A):
     """ Normalize the columns of a 2D array."""
-    B = A/np.tile(np.sqrt(sum(A**2, 0)), (np.size(A, 0), 1))
+    B = A/np.tile(np.sqrt(sum(A**2,0)),(np.size(A,0),1))
+    B = np.nan_to_num(B) # To get rid of nans out of zero divisions
     return B
 
 
-def makeBasis_StimKernel(neye, ncos, kpeaks, b, nkt=None, plot=False):
+def makeBasis_StimKernel(neye, ncos, kpeaks, b, w = None, nkt = None):
     """ Creates and plots basis of raised cosines. Adapted from Weber &
     Pillow 2017.
 
@@ -156,8 +157,9 @@ def makeBasis_StimKernel(neye, ncos, kpeaks, b, nkt=None, plot=False):
     Parameters
     ----------
     neye : int
-            Number of identity basis vectors at front. This will create vector
-            columns with spikes to capture the data points preceding the event.
+            Number of identity basis vectors at front. It defines the number of
+            first columns which has identity matrix for dense sampling of data
+            just preceeding the event.
     ncos  : int
             Number of vectors that are raised cosines. Cannot be 0 or negative.
     kpeaks : list
@@ -166,15 +168,17 @@ def makeBasis_StimKernel(neye, ncos, kpeaks, b, nkt=None, plot=False):
     b : int
             Offset for nonlinear scaling.  larger values -> more linear
             scaling of vectors.
+    w : int, optional
+            Window length of the time delayed data. When a value is not given
+            it defaults to the full length of the basis as w.
     nkt : int, optional
             Desired number of vectors in basis
 
     Returns
     -------
-    kbasis : ndarray
-        A basis of raised cosines as columns. The `neye` value defines
-        the number of first columns which has identity matrix at last rows
-        for dense sampling of data.
+    kbasis : 2D array
+        Shape is (window length (`w`) x # of cosines (`ncos+neye`))
+        A basis of raised cosines as columns.
 
     """
 
@@ -211,20 +215,24 @@ def makeBasis_StimKernel(neye, ncos, kpeaks, b, nkt=None, plot=False):
     if nkt == None:
         pass
     elif nkt0 < nkt:  # if desired time samples greater, add more zero basis
-        kbasis = np.concatenate((np.zeros(kbasis, (nkt-nkt0, ncos+neye))), axis=0)
+        kbasis = np.concatenate((kbasis,np.zeros((kbasis.shape[0],
+                                                  nkt-nkt0))),axis=1)
     elif nkt0 > nkt:  # if desired time samples less, get the last nkt columns of cosines
         kbasis = kbasis[:, :nkt]
 
+    # Modifying number of time points in the basis kernel. If the w value is
+    # greater than basis time points, padding zeros to back in time.
+    # If w value is lower than basis points back in time are discarded.
+    if w == None:
+        pass
+    elif w > kbasis.shape[0]:
+        kbasis = np.concatenate((np.zeros((w - kbasis.shape[0],
+                                           kbasis.shape[1])),kbasis),axis=0)
+    elif w < kbasis.shape[0]:
+        kbasis = kbasis[-w:, :]
+
     kbasis = normalizecols(kbasis)
 
-    if plot:
-        plt.figure()
-        plt.plot(kbasis)
-        plt.title(f'ncos: {ncos} ' +
-                  f'neye: {neye} ' +
-                  f'nkt: {nkt}\n' +
-                  f'kpeaks: {kpeaks} ' +
-                  f'nonlinearity (b): {b}')
     return kbasis
 
 
