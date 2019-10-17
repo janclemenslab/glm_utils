@@ -1,6 +1,5 @@
 import numpy as np
 from numpy.lib.stride_tricks import as_strided
-from matplotlib import pyplot as plt
 from sklearn.base import TransformerMixin
 
 
