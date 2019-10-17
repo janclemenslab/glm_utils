@@ -44,7 +44,7 @@ def time_delay_embedding(x, y=None, indices=None, window_size=None, flatten_insi
 
     # TODO: simplify code by "hard-coding" the fixed overlap size of `window_size-1`
     # if overlap_size is None:
-        overlap_size = window_size - 1
+    overlap_size = window_size - 1
 
     # get the number of overlapping windows that fit into the x
     num_windows = (x.shape[0] - window_size) // (window_size - overlap_size) + 1
