@@ -41,7 +41,7 @@ def time_delay_embedding(x, y=None, indices=None, window_size=None, flatten_insi
     if x.ndim == 1:
         x = x.reshape((-1, 1))
 
-  
+
     # TODO: simplify code by "hard-coding" the fixed overlap size of `window_size-1`
     # if overlap_size is None:
         overlap_size = window_size - 1
@@ -74,7 +74,7 @@ def time_delay_embedding(x, y=None, indices=None, window_size=None, flatten_insi
     if exclude_t0:
         X = X[:-1]
         if y is not None:
-        y = y[1:]
+            y = y[1:]
 
     if indices is not None:
         indices = np.array(indices) - window_size  # shift all indices since we lost the beginning `window_size` values from x and y
@@ -83,7 +83,7 @@ def time_delay_embedding(x, y=None, indices=None, window_size=None, flatten_insi
         # make sure we do not exceed bounds
         indices = indices[indices >= 0]
         indices = indices[indices < X.shape[0]]
-        
+
         X = X[indices, ...]
         if y is not None:
             y = y[indices]
