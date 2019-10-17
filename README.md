@@ -47,7 +47,7 @@ Processing steps that only affect `X` - feature normalization or scaling, basis 
 ## Useful extensions
 - [Group lasso](https://group-lasso.readthedocs.io/en/latest/index.html)
 - more advanced balancing with [imbalanced-learn](https://imbalanced-learn.readthedocs.io/en/stable/)
-- Generalized Additive models as a more principled way of using basis functions: [pyGAM]](https://pygam.readthedocs.io/en/latest/index.html)
+- Generalized Additive models as a more principled way of using basis functions: [pyGAM](https://pygam.readthedocs.io/en/latest/index.html)
 
 ## TODO:
 need-to_haves:
