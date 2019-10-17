@@ -3,18 +3,19 @@ from numpy.lib.stride_tricks import as_strided
 from sklearn.base import TransformerMixin
 
 
-def time_delay_embedding(x, y=None, window_size=None, overlap_size=None, flatten_inside_window=True, exclude_t0=True):
+def time_delay_embedding(x, y=None, indices=None, window_size=None, flatten_inside_window=True, exclude_t0=True):
     """Time delay embedding with overlap.
 
-    The embedded x will have `windows_size` fewer time points than the original x.
-    If y is provided, it will be modified to match the size of the embedded x.
+    The embedded `x` will have `windows_size` fewer time points (rows) than the original `x`.
+    If `y` is provided, it will be modified to match the size of the embedded `x`.
+    If `indices` is provided, will return only the `x` and `y` at the indices.
 
     Args:
         x (numpy array): 1D or 2D array
         y (numpy array, optional): If provided, will modify y to match entries in X
+        indices (numpy array, optional): If provided, will return X and y only for the indices, taking
+                                         care of any shifts in the data.
         window_size (int): Number of timesteps.
-        overlap_size (int, optional): Equivalent to the stride of the embedding.
-                                      Defaults to window_size-1 (stride=1).
         flatten_inside_window (bool, optional): Flatten 2D x-values to 1D.
                                                 X will be [nb_timesteps, delays * features], otherwise [nb_timesteps, delays, features].
                                                 Will always preserve shape of y features (except of the number of timesteps).
@@ -26,7 +27,7 @@ def time_delay_embedding(x, y=None, window_size=None, overlap_size=None, flatten
 
     Returns:
         X: delay embedded time series
-        y (if provided as an argument)
+        y: y-values correctly cut, shifted and indexed if provided as an argument.
     """
     if window_size is None:
         raise ValueError('Invalid arguments: window_size not specified.')
@@ -40,12 +41,16 @@ def time_delay_embedding(x, y=None, window_size=None, overlap_size=None, flatten
     if x.ndim == 1:
         x = x.reshape((-1, 1))
 
-    if overlap_size is None:
+  
+    # TODO: simplify code by "hard-coding" the fixed overlap size of `window_size-1`
+    # if overlap_size is None:
         overlap_size = window_size - 1
 
     # get the number of overlapping windows that fit into the x
     num_windows = (x.shape[0] - window_size) // (window_size - overlap_size) + 1
     overhang = x.shape[0] - (num_windows * window_size - (num_windows - 1) * overlap_size)
+
+    # REMOVE THIS??
     # if there's overhang, need an extra window and a zero pad on the x
     if overhang != 0:
         num_windows += 1
@@ -68,8 +73,20 @@ def time_delay_embedding(x, y=None, window_size=None, overlap_size=None, flatten
 
     if exclude_t0:
         X = X[:-1]
-    if y is not None and exclude_t0:
+        if y is not None:
         y = y[1:]
+
+    if indices is not None:
+        indices = np.array(indices) - window_size  # shift all indices since we lost the beginning `window_size` values from x and y
+        if not exclude_t0:  # shift one back since we removed the first index from y
+            indices = indices + 1
+        # make sure we do not exceed bounds
+        indices = indices[indices >= 0]
+        indices = indices[indices < X.shape[0]]
+        
+        X = X[indices, ...]
+        if y is not None:
+            y = y[indices]
 
     if y is not None:
         return X, y
