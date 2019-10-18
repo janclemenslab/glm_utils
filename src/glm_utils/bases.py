@@ -55,10 +55,11 @@ def _ff(x, c, db):
 def _normalizecols(A):
     """ Normalize the columns of a 2D array."""
     B = A/np.tile(np.sqrt(sum(A**2, 0)), (np.size(A, 0), 1))
+    B = np.nan_to_num(B) # To get rid of nans out of zero divisions
     return B
 
 
-def raised_cosine(neye, ncos, kpeaks, b, nkt=None):
+def raised_cosine(neye, ncos, kpeaks, b, w=None, nbasis=None):
     """ Creates and plots basis of raised cosines. Adapted from Weber &
     Pillow 2017.
 
@@ -68,64 +69,77 @@ def raised_cosine(neye, ncos, kpeaks, b, nkt=None):
     Parameters
     ----------
     neye : int
-            Number of identity basis vectors at front. This will create vector
-            columns with spikes to capture the data points preceding the event.
+            Number of identity basis vectors at front. It defines the number of
+            first columns which has identity matrix for dense sampling of data
+            just preceeding the event.
     ncos  : int
             Number of vectors that are raised cosines. Cannot be 0 or negative.
     kpeaks : list
             List of peak positions of 1st and last cosines relative to the start
             of cosine basis vectors (e.g. [0 10])
     b : int
-            O_ffset for no_nlinear scaling.  larger values -> more linear
+            Offset for nonlinear scaling.  larger values -> more linear
             scaling of vectors.
-    nkt : int, optional
-            Desired number of vectors in basis
+    w : int, optional
+            Desired number of time points (e.g. window length) of the bases.
+            It must be same as the window of time delay embedded data.
+            When a value is not given it assigns w as the full time length of the 
+            basis kernel.
+    nbasis : int, optional
+            Desired number of basis vectors
 
     Returns
     -------
     kbasis : ndarray [time, bases]
-        A basis of raised cosines as columns. The `neye` value defines
-        the number of first columns which has identity matrix at last rows
-        for dense sampling of data.
-
+        A basis of raised cosines as columns.
     """
 
     kpeaks = np.array(kpeaks)
-    kdt = 1  # step for the kernel
 
     yrnge = _nlin(kpeaks + b)  # no_nlinear transform, b is no_nlinearity of scaling
 
     db = (yrnge[1] - yrnge[0]) / (ncos - 1)  # spacing between cosine peaks
-    ctrs = np.linspace(yrnge[0], yrnge[1], ncos)  # _nlin(kpeaks)<-weird # centers of cosines
+    ctrs = np.linspace(yrnge[0], yrnge[1], ncos) # centers for cosine peaks
 
     # mxt is for the kernel, without the no_nlinear transform
-    mxt = _invnl(yrnge[1] + 2 * db) - b  # !!!!why is there 2*db? max time bin
-    kt0 = np.arange(0, mxt, kdt)  # kernel time points/ no no_nlinear transform yet
-    nt = len(kt0)  # number of kernel time points
+    mxt = _invnl(yrnge[1] + 2 * db) - b  # max time bin
+    kt = np.arange(0, mxt)  # kernel time points/ no no_nlinear transform yet
+    nt = len(kt)  # number of kernel time points
 
     # Now we transform kernel time points through no_nlinearity and tile them
-    e1 = np.tile(_nlin(kt0 + b), (ncos, 1))
+    e1 = np.tile(_nlin(kt + b), (ncos, 1))
     # Tiling the center points for matrix multiplication
     e2 = np.tile(ctrs, (nt, 1)).T
 
     # Creating the raised cosines
     kbasis0 = _ff(e1, e2, db)
 
-    # Concatenate identity vectors
-    nkt0 = np.size(kt0, 0)  # !!!! same as nt??? Redundant or not
-    a1 = np.concatenate((np.eye(neye), np.zeros((nkt0, neye))), axis=0)
+    # Concatenate identity vectors and create basis kernel (kbasis)
+    a1 = np.concatenate((np.eye(neye), np.zeros((nt, neye))), axis=0)
     a2 = np.concatenate((np.zeros((neye, ncos)), kbasis0.T), axis=0)
     kbasis = np.concatenate((a1, a2), axis=1)
     kbasis = np.flipud(kbasis)
-    nkt0 = np.size(kbasis, 1)
+    nb = np.size(kbasis, 1) # number of current bases
 
-    # Modifying number of output cosines if nkt is given
-    if nkt == None:
+    # Modifying number of output bases if nbasis is given
+    if nbasis == None:
         pass
-    elif nkt0 < nkt:  # if desired time samples greater, add more zero basis
-        kbasis = np.concatenate((np.zeros(kbasis, (nkt - nkt0, ncos + neye))), axis=0)
-    elif nkt0 > nkt:  # if desired time samples less, get the last nkt columns of cosines
-        kbasis = kbasis[:, :nkt]
+    elif nb < nbasis:  # if desired number of bases greater, add more zero bases
+        kbasis = np.concatenate((kbasis,np.zeros((kbasis.shape[0],
+                                                  nbasis-nb))),axis=1)
+    elif nb > nbasis:  # if desired number of bases less, get the front bases
+        kbasis = kbasis[:, :nbasis]
+
+    # Modifying number of time points (e.g. window) in the basis kernel. If the w value is
+    # greater than basis time points, padding zeros to back in time.
+    # If w value is lower than basis points back in time are discarded.
+    if w == None:
+        pass
+    elif w > kbasis.shape[0]:
+        kbasis = np.concatenate((np.zeros((w - kbasis.shape[0],
+                                           kbasis.shape[1])),kbasis),axis=0)
+    elif w < kbasis.shape[0]:
+        kbasis = kbasis[-w:, :]
 
     kbasis = _normalizecols(kbasis)
     return kbasis
