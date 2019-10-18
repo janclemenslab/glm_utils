@@ -38,13 +38,13 @@ def laplacian_pyramid(width, levels, step, FWHM, normalize=True):
     return np.stack(B).T
 
 
-def nlin(x): return np.log(x + 1e-20)
+def _nlin(x): return np.log(x + 1e-20)
 
 
-def invnl(x): return np.exp(x) - 1e-20
+def _invnl(x): return np.exp(x) - 1e-20
 
 
-def ff(x, c, db):
+def _ff(x, c, db):
     """ Gives the raised cosine of data points `x` with classified centers
     `c` with spacing between cosine peaks `db`.
     """
@@ -52,7 +52,7 @@ def ff(x, c, db):
     return kbasis
 
 
-def normalizecols(A):
+def _normalizecols(A):
     """ Normalize the columns of a 2D array."""
     B = A/np.tile(np.sqrt(sum(A**2, 0)), (np.size(A, 0), 1))
     return B
@@ -76,7 +76,7 @@ def raised_cosine(neye, ncos, kpeaks, b, nkt=None):
             List of peak positions of 1st and last cosines relative to the start
             of cosine basis vectors (e.g. [0 10])
     b : int
-            Offset for nonlinear scaling.  larger values -> more linear
+            O_ffset for no_nlinear scaling.  larger values -> more linear
             scaling of vectors.
     nkt : int, optional
             Desired number of vectors in basis
@@ -93,23 +93,23 @@ def raised_cosine(neye, ncos, kpeaks, b, nkt=None):
     kpeaks = np.array(kpeaks)
     kdt = 1  # step for the kernel
 
-    yrnge = nlin(kpeaks + b)  # nonlinear transform, b is nonlinearity of scaling
+    yrnge = _nlin(kpeaks + b)  # no_nlinear transform, b is no_nlinearity of scaling
 
     db = (yrnge[1] - yrnge[0]) / (ncos - 1)  # spacing between cosine peaks
-    ctrs = np.linspace(yrnge[0], yrnge[1], ncos)  # nlin(kpeaks)<-weird # centers of cosines
+    ctrs = np.linspace(yrnge[0], yrnge[1], ncos)  # _nlin(kpeaks)<-weird # centers of cosines
 
-    # mxt is for the kernel, without the nonlinear transform
-    mxt = invnl(yrnge[1] + 2 * db) - b  # !!!!why is there 2*db? max time bin
-    kt0 = np.arange(0, mxt, kdt)  # kernel time points/ no nonlinear transform yet
+    # mxt is for the kernel, without the no_nlinear transform
+    mxt = _invnl(yrnge[1] + 2 * db) - b  # !!!!why is there 2*db? max time bin
+    kt0 = np.arange(0, mxt, kdt)  # kernel time points/ no no_nlinear transform yet
     nt = len(kt0)  # number of kernel time points
 
-    # Now we transform kernel time points through nonlinearity and tile them
-    e1 = np.tile(nlin(kt0 + b), (ncos, 1))
+    # Now we transform kernel time points through no_nlinearity and tile them
+    e1 = np.tile(_nlin(kt0 + b), (ncos, 1))
     # Tiling the center points for matrix multiplication
     e2 = np.tile(ctrs, (nt, 1)).T
 
     # Creating the raised cosines
-    kbasis0 = ff(e1, e2, db)
+    kbasis0 = _ff(e1, e2, db)
 
     # Concatenate identity vectors
     nkt0 = np.size(kt0, 0)  # !!!! same as nt??? Redundant or not
@@ -127,7 +127,7 @@ def raised_cosine(neye, ncos, kpeaks, b, nkt=None):
     elif nkt0 > nkt:  # if desired time samples less, get the last nkt columns of cosines
         kbasis = kbasis[:, :nkt]
 
-    kbasis = normalizecols(kbasis)
+    kbasis = _normalizecols(kbasis)
     return kbasis
 
 
@@ -152,17 +152,31 @@ def bsplines(width, positions, degree: int = 3, periodic: bool = False):
     npositions = len(positions)
     y_dummy = np.zeros(npositions)
 
-    positions, coeffs, degree = si.splrep(positions, y_dummy, k=degree,
+    positions, coe_ffs, degree = si.splrep(positions, y_dummy, k=degree,
                                           per=periodic)
-    ncoeffs = len(coeffs)
+    ncoe_ffs = len(coe_ffs)
     bsplines = []
     for ispline in range(npositions):
-        coeffs = [1.0 if ispl == ispline else 0.0 for ispl in range(ncoeffs)]
-        bsplines.append((positions, coeffs, degree))
+        coe_ffs = [1.0 if ispl == ispline else 0.0 for ispl in range(ncoe_ffs)]
+        bsplines.append((positions, coe_ffs, degree))
 
     B = np.array([si.splev(t, spline) for spline in bsplines])
     B = B[:, ::-1].T  # invert so bases "begin" at the right and transpose to [time x bases]
     return B
+
+
+def multifeature_basis(B, nb_features: int):
+    """[summary]
+
+    Args:
+        B ([type]): [description]
+        nb_features (int, optional): [description]. Defaults to 1.
+ 
+    Returns:
+        [type]: [description]
+    """
+    MB = None  # do stuff
+    return MB
 
 
 def identity(width):
