@@ -94,7 +94,7 @@ def time_delay_embedding(x, y=None, indices=None, window_size=None, flatten_insi
         return X
 
 
-def undersampling(x, y, window_size=1, seed=None):
+def undersampling(x, y, seed=None):
     ''' Data balancing of binary data [0,1], the majority class will be reduced to the size of the minority class.
 
     The balanced y will have as many ones as zeros with an undersampled majority class.
@@ -105,7 +105,6 @@ def undersampling(x, y, window_size=1, seed=None):
     Args:
         x (numpy array): 1D or 2D array
         y (numpy array): 1D array, containing ones and zeros
-        window_size (int): Number of timesteps.
         seed (int): Seed to initialize the random number generator
 
     Returns:
@@ -136,7 +135,7 @@ def undersampling(x, y, window_size=1, seed=None):
     majority = majority[np.random.choice(len(majority), int(n))]
     idx = np.r_[minority, majority]
 
-    X = x[idx-window_size+1, ...]
+    X = x[idx, ...]
     y = y[idx]
 
     return X, y
