@@ -261,7 +261,7 @@ class BasisProjection(TransformerMixin):
         self.n_bases = self.basis.shape[1]  # number of cosine bumps in basis
 
     def transform(self, X):
-        """Basis projection of the *delay embedded data* `X` onto `basis`.
+        """Basis projection of the data (e.g. *delay embedded data*) `X` onto `basis`.
         Shape of X should be [# of observation, window_size].
         See :func:`time_delay_embedding`"""
 
@@ -272,9 +272,8 @@ class BasisProjection(TransformerMixin):
         return np.dot(X, self.basis)
 
     def inverse_transform(self, Xt):
-        """Back projects the filters to the basis so that the original data can be
-        predicted.
-        Shape of X should be [# of observation, # of basis columns].
+        """Back projects the values (e.g. filter coefficients) to original domain.
+        Shape of X should be [N, # number of bases (columns in self.basis)].
         """
 
         if Xt.shape[1] != self.n_bases:
