@@ -165,18 +165,19 @@ def bsplines(width, positions, degree: int = 3, periodic: bool = False):
     return B
 
 
-def multifeature_basis(B, nb_features: int):
-    """[summary]
+def multifeature_basis(B, nb_features: int = 1):
+    """Get block diagonal matrix from a 2-D matrix (B) repeated once per feature.
 
     Args:
-        B ([type]): [description]
-        nb_features (int, optional): [description]. Defaults to 1.
+        B ([type]): 2-D matrix with basis functions. 
+        nb_features (int, optional): number of features. Defaults to 1.
  
     Returns:
-        [type]: [description]
+        [type]: block diagonal matrix
     """
-    MB = None  # do stuff
-    return MB
+    from scipy.linalg import block_diag
+
+    return block_diag(*[B for ii in range(nb_features)])
 
 
 def identity(width):
