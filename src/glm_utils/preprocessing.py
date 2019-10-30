@@ -6,7 +6,7 @@ from sklearn.base import TransformerMixin
 def time_delay_embedding(x, y=None, indices=None, window_size=None, flatten_inside_window=True, exclude_t0=True):
     """Time delay embedding with overlap.
 
-    The embedded `x` will have `windows_size` fewer time points (rows) than the original `x`.
+    The embedded `x` will have `windows_size` fewer time points (rows) than the original `x`, cutting off the first indices.
     If `y` is provided, it will be modified to match the size of the embedded `x`.
     If `indices` is provided, will return only the `x` and `y` at the indices.
 
@@ -14,7 +14,7 @@ def time_delay_embedding(x, y=None, indices=None, window_size=None, flatten_insi
         x (numpy array): 1D or 2D array
         y (numpy array, optional): If provided, will modify y to match entries in X
         indices (numpy array, optional): If provided, will return X and y only for the indices, taking
-                                         care of any shifts in the data.
+                                         care of any shifts in the data. Indices lower than `windows_size` will be ignored.
         window_size (int): Number of timesteps.
         flatten_inside_window (bool, optional): Flatten 2D x-values to 1D.
                                                 X will be [nb_timesteps, delays * features], otherwise [nb_timesteps, delays, features].
