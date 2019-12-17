@@ -196,3 +196,21 @@ def multifeature_basis(B, nb_features: int = 1):
 
 def identity(width):
     return np.identity(width)
+
+
+def trivial_spacing(width, spacing):
+    """ Trivial base for sampling equally spaced time points.
+    
+    Args:
+        width (int): Time span of the basis functions.
+        spacing (int): space between sampled time points.
+
+    Returns:
+        [time, bases] - np matrix with basis functions.
+    """
+    
+    spaced_base = np.zeros((width,width//spacing))
+    for ii in range(width//spacing):
+        spaced_base[-ii*spacing-1,ii] = 1
+
+    return spaced_base
