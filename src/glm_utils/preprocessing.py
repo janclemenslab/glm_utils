@@ -156,8 +156,8 @@ class BasisProjection(TransformerMixin):
 
         if X.shape[1] != self.n_times:
             raise ValueError(f'Cannot transform X with {X.shape} shape'
-                             + 'and basis with {self.basis.shape} shape.'
-                             + ' X shape1 != basis shape0')
+                             + f' and basis with {self.basis.shape} shape.'
+                             + f' X shape1 != basis shape0')
         return np.dot(X, self.basis)
 
     def inverse_transform(self, Xt):
@@ -167,6 +167,6 @@ class BasisProjection(TransformerMixin):
 
         if Xt.shape[1] != self.n_bases:
             raise ValueError(f'Cannot transform X with {Xt.shape} shape'
-                             + 'and basis with {self.basis.shape} shape.'
-                             + ' X shape1 != basis shape1')
+                             + f' and basis with {self.basis.shape} shape.'
+                             + f' X shape1 != basis shape1')
         return np.dot(Xt, self.basis.T)
