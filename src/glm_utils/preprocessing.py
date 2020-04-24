@@ -17,8 +17,8 @@ def time_delay_embedding(x, y=None, indices=None, window_size=None, flatten_insi
                                          care of any shifts in the data. Indices lower than `windows_size` will be ignored.
         window_size (int): Number of timesteps.
         flatten_inside_window (bool, optional): Flatten 2D x-values to 1D.
-                                                X will be [nb_timesteps, delays * features], otherwise [nb_timesteps, delays, features].
-                                                Will always preserve shape of y features (except of the number of timesteps).
+                                                if True: X will be [nb_timesteps, delays * features], otherwise [nb_timesteps, delays, features].
+                                                Will always preserve shape of y features (except for the number of timesteps).
                                                 Defaults to True.
         exclude_t0 (bool, optional): Exclude the current time point from the delays.
                                     `X[t]` will contain `[x[t-w-1, ..., x[t-1]]`. If `exlude_t0=False`, `x[t-w, ..., x[t]]`
@@ -62,11 +62,14 @@ def time_delay_embedding(x, y=None, indices=None, window_size=None, flatten_insi
     X = as_strided(
         x,
         shape=(num_windows, window_size * x.shape[1]),
-        strides=((window_size-overlap_size) * x.shape[1] * sz, sz)
+        strides=((window_size - overlap_size) * x.shape[1] * sz, sz)
     )
 
-    if not flatten_inside_window:
-        X = X.reshape((num_windows, -1, x.shape[1]))
+    X = X.reshape((num_windows, -1, x.shape[1]))
+
+    if flatten_inside_window:
+        X = X.transpose((0, 2, 1))  # [T, feat, tau]
+        X = X.reshape((X.shape[0], -1))
 
     if y is not None:
         y = y[window_size - 1::window_size - overlap_size]
