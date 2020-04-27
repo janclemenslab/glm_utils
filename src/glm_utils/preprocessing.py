@@ -17,8 +17,8 @@ def time_delay_embedding(x, y=None, indices=None, window_size=None, flatten_insi
                                          care of any shifts in the data. Indices lower than `windows_size` will be ignored.
         window_size (int): Number of timesteps.
         flatten_inside_window (bool, optional): Flatten 2D x-values to 1D.
-                                                X will be [nb_timesteps, delays * features], otherwise [nb_timesteps, delays, features].
-                                                Will always preserve shape of y features (except of the number of timesteps).
+                                                if True: X will be [nb_timesteps, delays * features], otherwise [nb_timesteps, delays, features].
+                                                Will always preserve shape of y features (except for the number of timesteps).
                                                 Defaults to True.
         exclude_t0 (bool, optional): Exclude the current time point from the delays.
                                     `X[t]` will contain `[x[t-w-1, ..., x[t-1]]`. If `exlude_t0=False`, `x[t-w, ..., x[t]]`
@@ -62,11 +62,14 @@ def time_delay_embedding(x, y=None, indices=None, window_size=None, flatten_insi
     X = as_strided(
         x,
         shape=(num_windows, window_size * x.shape[1]),
-        strides=((window_size-overlap_size) * x.shape[1] * sz, sz)
+        strides=((window_size - overlap_size) * x.shape[1] * sz, sz)
     )
 
-    if not flatten_inside_window:
-        X = X.reshape((num_windows, -1, x.shape[1]))
+    X = X.reshape((num_windows, -1, x.shape[1]))
+
+    if flatten_inside_window:
+        X = X.transpose((0, 2, 1))  # [T, feat, tau]
+        X = X.reshape((X.shape[0], -1))
 
     if y is not None:
         y = y[window_size - 1::window_size - overlap_size]
@@ -151,22 +154,24 @@ class BasisProjection(TransformerMixin):
 
     def transform(self, X):
         """Basis projection of the data (e.g. *delay embedded data*) `X` onto `basis`.
-        Shape of X should be [# of observation, window_size].
-        See :func:`time_delay_embedding`"""
-
+        Shape of X should be [observations, window_size].
+        Will automatically reshape 1D inputs to [1, window_size].
+        """
+        X = np.atleast_2d(X)
         if X.shape[1] != self.n_times:
             raise ValueError(f'Cannot transform X with {X.shape} shape'
                              + f' and basis with {self.basis.shape} shape.'
-                             + f' X shape1 != basis shape0')
+                             + f' X.shape[1] ({X.shape[1]}) != self.basis.shape[0] ({self.basis.shape[0]}).')
         return np.dot(X, self.basis)
 
     def inverse_transform(self, Xt):
         """Back projects the values (e.g. filter coefficients) to original domain.
-        Shape of X should be [N, # number of bases (columns in self.basis)].
+        Shape of X should be [observations, # number of bases (columns in self.basis)].
+        Will automatically reshape 1D inputs to [1, # number of bases].
         """
-
+        Xt = np.atleast_2d(Xt)
         if Xt.shape[1] != self.n_bases:
             raise ValueError(f'Cannot transform X with {Xt.shape} shape'
                              + f' and basis with {self.basis.shape} shape.'
-                             + f' X shape1 != basis shape1')
+                             + f' X.shape[1] ({Xt.shape[1]}) != self.basis.shape[1] ({self.basis.shape[0]}).')
         return np.dot(Xt, self.basis.T)
