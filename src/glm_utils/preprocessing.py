@@ -154,22 +154,24 @@ class BasisProjection(TransformerMixin):
 
     def transform(self, X):
         """Basis projection of the data (e.g. *delay embedded data*) `X` onto `basis`.
-        Shape of X should be [# of observation, window_size].
-        See :func:`time_delay_embedding`"""
-
+        Shape of X should be [observations, window_size].
+        Will automatically reshape 1D inputs to [1, window_size].
+        """
+        X = np.atleast_2d(X)
         if X.shape[1] != self.n_times:
             raise ValueError(f'Cannot transform X with {X.shape} shape'
                              + f' and basis with {self.basis.shape} shape.'
-                             + f' X shape1 != basis shape0')
+                             + f' X.shape[1] ({X.shape[1]}) != self.basis.shape[0] ({self.basis.shape[0]}).')
         return np.dot(X, self.basis)
 
     def inverse_transform(self, Xt):
         """Back projects the values (e.g. filter coefficients) to original domain.
-        Shape of X should be [N, # number of bases (columns in self.basis)].
+        Shape of X should be [observations, # number of bases (columns in self.basis)].
+        Will automatically reshape 1D inputs to [1, # number of bases].
         """
-
+        Xt = np.atleast_2d(Xt)
         if Xt.shape[1] != self.n_bases:
             raise ValueError(f'Cannot transform X with {Xt.shape} shape'
                              + f' and basis with {self.basis.shape} shape.'
-                             + f' X shape1 != basis shape1')
+                             + f' X.shape[1] ({Xt.shape[1]}) != self.basis.shape[1] ({self.basis.shape[0]}).')
         return np.dot(Xt, self.basis.T)
