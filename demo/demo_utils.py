@@ -5,10 +5,9 @@ from scipy.stats import zscore
 from scipy.signal import convolve
 
 # TODO: add noise
-# TODO: add random_seed
 
 
-def get_data(npoints: int = 2000, noise: float = 0, random_seed: int = 42):
+def get_data(npoints: int = 2000):
     # define bases
     B = raised_cosine(1, 5, [1, 23], 9)
     window_size = B.shape[0]
