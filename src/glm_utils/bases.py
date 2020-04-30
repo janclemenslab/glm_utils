@@ -1,6 +1,6 @@
 import numpy as np
 import scipy.interpolate as si
-
+import scipy.linalg
 
 def laplacian_pyramid(width, levels, step, FWHM, normalize=True):
     """ Get a 1d Laplacian pyramid basis matrix of given number of levels for
@@ -83,7 +83,7 @@ def raised_cosine(neye, ncos, kpeaks, b, w=None, nbasis=None):
     w : int, optional
             Desired number of time points (e.g. window length) of the bases.
             It must be same as the window of time delay embedded data.
-            When a value is not given it assigns w as the full time length of the 
+            When a value is not given it assigns w as the full time length of the
             basis kernel.
     nbasis : int, optional
             Desired number of basis vectors
@@ -183,15 +183,13 @@ def multifeature_basis(B, nb_features: int = 1):
     """Get block diagonal matrix from a 2-D matrix (B) repeated once per feature.
 
     Args:
-        B ([type]): 2-D matrix with basis functions. 
+        B ([type]): 2-D matrix with basis functions.
         nb_features (int, optional): number of features. Defaults to 1.
- 
+
     Returns:
         [type]: block diagonal matrix
     """
-    from scipy.linalg import block_diag
-
-    return block_diag(*[B for ii in range(nb_features)])
+    return scipy.linalg.block_diag(*[B for ii in range(nb_features)])
 
 
 def identity(width):
@@ -200,7 +198,7 @@ def identity(width):
 
 def trivial_spacing(width, spacing):
     """ Trivial base for sampling equally spaced time points.
-    
+
     Args:
         width (int): Time span of the basis functions.
         spacing (int): space between sampled time points.
@@ -208,7 +206,7 @@ def trivial_spacing(width, spacing):
     Returns:
         [time, bases] - np matrix with basis functions.
     """
-    
+
     spaced_base = np.zeros((width,width//spacing))
     for ii in range(width//spacing):
         spaced_base[-ii*spacing-1,ii] = 1
