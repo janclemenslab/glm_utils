@@ -4,31 +4,30 @@ import numpy as np
 from scipy.stats import zscore
 from scipy.signal import convolve
 
-# TODO: add noise
-
 
 def get_data(npoints: int = 2000):
-    # define bases
+
+    # define basis
     B = raised_cosine(1, 5, [1, 23], 9)
     window_size = B.shape[0]
 
-    # define toy inputs (stimuli)
+    # define stimuli
     ninputs = 4
     npoints = npoints + window_size
-    inputs_x = np.random.random((npoints, ninputs))
-    inputs_x = convolve(inputs_x, np.ones((10, 1))/10, mode='same')  # why?
-    zscore_inputs_x = zscore(inputs_x, axis=0)
+    x = np.random.random((npoints, ninputs))
+    x = convolve(x, np.ones((10, 1))/10, mode='same')  # make things a little smoother
+    zscored_x = zscore(x, axis=0)
 
-    # define toy filters
+    # define filters
     filters = B[:, [4, 2, 4, 1]] - B[:, [1, 5, 4, 1]]*0.5
+    filters[:, 1] *= 1.5
+    filters[:, 2] *= 0.5
 
-    # create toy signal from toy inputs and filters
+    # create response
     y = np.zeros((npoints,), dtype=float)
     for ii in range(ninputs):
-        X = time_delay_embedding(
-            x=zscore_inputs_x[:, ii], window_size=window_size)
-        X = np.concatenate(
-            (np.ones((window_size, *X.shape[1:]))*X[0, 0], X), axis=0)
+        X = time_delay_embedding(x=zscored_x[:, ii], window_size=window_size)
+        X = np.concatenate((np.ones((window_size, *X.shape[1:]))*X[0, 0], X), axis=0)
         y = y + np.dot(X, filters[:, ii])
 
-    return zscore_inputs_x[window_size:], y[window_size:], filters
+    return zscored_x[window_size:], y[window_size:], filters
