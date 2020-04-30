@@ -193,7 +193,11 @@ def multifeature_basis(B, nb_features: int = 1):
 
 
 def identity(width):
-    return np.identity(width)
+    return np.identity(width)[::-1, :]
+
+
+def comb(width, spacing):
+    return trivial_spacing(width, spacing)
 
 
 def trivial_spacing(width, spacing):
