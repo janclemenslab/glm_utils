@@ -1,10 +1,10 @@
+"""Defines basis functions."""
 import numpy as np
 import scipy.interpolate as si
 import scipy.linalg
 
 def laplacian_pyramid(width, levels, step, FWHM, normalize=True):
-    """ Get a 1d Laplacian pyramid basis matrix of given number of levels for
-        vectors of given length.
+    """ Get a 1d Laplacian pyramid basis matrix.
 
         Args:
             width (int): Time span of the basis functions.
