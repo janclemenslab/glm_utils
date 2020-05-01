@@ -5,7 +5,7 @@ Tools for fitting GLMs with explicit time dependence (a.k.a. filters).
 Features:
 - Time delay embedding ([basics demo](demo/basics.ipynb))
 - Basis functions ([bases demo](demo/basis_functions.ipynb))
-- Follows [scikit-learn's](https://scikit-learn.org/) API conventions so can be used with [pipelines](https://scikit-learn.org/stable/modules/compose.html#pipeline) ([pipiline demo](demo/pipeline.ipynb))
+- Follows [scikit-learn's](https://scikit-learn.org/) API conventions so can be used with [pipelines](https://scikit-learn.org/stable/modules/compose.html#pipeline) ([pipeline demo](demo/pipeline.ipynb))
 
 For a more complete example see [multiple_inputs](demo/multiple_inputs.ipynb).
 
