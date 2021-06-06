@@ -4,8 +4,9 @@ Tools for fitting Generalized Linear Models (GLMs) with time dependence (a.k.a. 
 
 Features:
 - Time delay embedding ([basics demo](demo/basics.ipynb)).
-- Basis functions ([bases demo](demo/basis_functions.ipynb))
+- Basis functions ([bases demo](demo/basis_functions.ipynb)).
 - Follows [scikit-learn's](https://scikit-learn.org/) API conventions. Can be used with [scikit-learn pipelines](https://scikit-learn.org/stable/modules/compose.html#pipeline) (see [demo](demo/pipeline.ipynb)).
+- Fitting quadratic filter models. See[demo](demo/quadratic_filter.ipynb)).
 
 For a more complete example see [multiple_inputs](demo/multiple_inputs.ipynb).
 
